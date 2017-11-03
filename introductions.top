@@ -1,0 +1,53 @@
+
+topic: ~INTRODUCTIONS keep repeat (~emogoodbye ~emohello ~emohowzit name here )
+
+#!x matches every time on startup of a new conversation
+t: ( %input<%userfirstline ) 
+	Welcome to your case interview practice. I'm TEST and I'll be your guide. ^reuse(ASK_NAME)
+
+t: ASK_NAME () What's your name [$repeat , once again] ?
+	#! Brianne
+	a: (_~propername !$repeat ) ^reuse(CHECK_NAME)
+	#! My name is Earl
+	a: CHECK_NAME (my name be _*~4) So your name is '_0 , is that right?
+		$name = '_0
+		b: (~yes) ^reuse(CORRECT_NAME) 
+		b: (~no) Could you repeat it for me, please? $repeat = 1 ^reuse(ASK_NAME)
+		b: ^reuse(ASK_NAME)
+	#! Screw this
+	a: ($repeat {it} {name} {be} _*) ^reuse(CHECK_NAME)
+	a: I didn't quite get it. $repeat = 1 ^reuse(ASK_NAME)
+
+t: CORRECT_NAME () All right, $name, let's start our case. ^reuse(CASE_INTRO)
+
+t: CASE_INTRO () Our client is a coffin maker in Paraguay, which is located in South America. His company produces high-quality hand-made wooden coffins with skilled employees. However, the trend in the business is changing and new technology would allow him to build coffins using machines, which would require much less labour. The client wants to know if it makes sense to invest in this coffin-making technology or if he should leave the business completely. ^reuse(FIRST_PROMPT)
+
+t: FIRST_PROMPT ($strat_moves<4) [Can you list a strategic move that our client should consider?] [$strat_moves What else?] [$strat_moves Can you think of something else?] [$strat_moves Any other ideas?] [$strat_moves Could you try something else?]
+	#! Sell the whole business
+	a: (sell * [business company]) [Ok] [Right] [Correct] ["That's right"] [True], he could sell the company as a whole.
+	$strat_moves += 1
+	^reuse(FIRST_PROMPT)
+	#! Shut it down
+	a: (["shut down" quit close leave "sell assets"]) [Ok] [Right] [Correct] ["That's right"] [True], he could close the company and sell the assets.
+	$strat_moves += 1
+	^reuse(FIRST_PROMPT)
+	#! The owner put money into the new method
+	a: (!~no [invest "put money"]) ^reuse(INVEST)
+	#! He should invest in the tech
+	a: INVEST (!~no [technology tech process method machine]) [Ok] [Right] [Correct] ["That's right"] [True], he could invest in the new technology.
+	$strat_moves += 1
+	^reuse(FIRST_PROMPT)
+	#! He should stay where he is
+	a: ([stay keep still same]) [Ok] [Right] [Correct] ["That's right"] [True], he could keep the business as it is right now.
+	$strat_moves += 1
+	^reuse(FIRST_PROMPT)
+
+	a: ($strat_moves>2 [~no none don't]) $first_finished=1 [Great] [good] [nice] job! We should consider he could stay as he is, invest in the new technology, sell the company as a whole or close the company and sell the assets.
+		^reuse(SECOND_PROMPT)
+	a: ([~no none not]) $first_finished=1 [Too bad.] [It's a shame.]  You should consider he could stay as he is, invest in the new technology, sell the company as a whole or close the company and sell the assets.
+		^reuse(SECOND_PROMPT)
+
+t: ALL_STRAT_MOVES ($strat_moves>3) $first_finished=1 [Impressive] [Wow]  , you got them all. ^reuse(SECOND_PROMPT)
+
+t: SECOND_PROMPT ($first_finished) Now that we know what steps he could take, what do you need to figure out the size of the business?
+
