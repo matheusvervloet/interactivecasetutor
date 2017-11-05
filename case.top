@@ -1,0 +1,112 @@
+###################################    BOT INTRO      ############################################
+
+
+topic: ~CASE_TOPIC  repeat ()
+
+#!x matches every time on startup of a new conversation
+t: BEGIN_CASE () Welcome to your case interview practice. I'm TEST and I'll be your guide. ^reuse(ASK_NAME)
+
+t: ASK_NAME () What's your name [$repeat , once again] ?
+^keep()
+	#! Brianne
+	a: (_~propername !$repeat ) ^reuse(CHECK_NAME)
+	#! My name is Earl
+	a: CHECK_NAME (my name be _*~4) So your name is ^original('_0) , is that right?
+		$name = ^original('_0)
+		b: (~yes) ^respond(~CASE_INTRO) 
+		b: (~no) Could you repeat it for me, please? $repeat = 1 ^reuse(ASK_NAME)
+		b: () ^reuse(ASK_NAME)
+	#! My name's dog
+	a: ($repeat {my} {it} {name} {be} _*) ^reuse(CHECK_NAME)
+	a: () I didn't quite get it. $repeat = 1 ^reuse(ASK_NAME)
+
+##################################    CASE INTRO       ###########################################
+
+topic: ~CASE_INTRO  repeat ()
+
+u: () All right, $name, let's start our case. ^reuse(CASE_INTRO)
+
+t: CASE_INTRO () Our client is a coffin maker in Paraguay, which is located in South America. His company produces high-quality hand-made wooden coffins with skilled employees. However, the trend in the business is changing and new technology would allow him to build coffins using machines, which would require much less labour. The client wants to know if it makes sense to invest in this coffin-making technology or if he should leave the business completely. ^respond(~FIRST_PROMPT)
+
+##################################    FIRST PROMPT     ###########################################
+
+concept: ~company_business [business company operation everything]
+topic: ~FIRST_PROMPT repeat ()
+
+u: FIRST_TEXT () [!$strat_moves Can you list a strategic move that our client should consider?] [$strat_moves What else?] [$strat_moves Can you think of something else?] [$strat_moves Any other ideas?] [$strat_moves Could you try something else?]
+^keep()
+	#! Sell the whole business
+	a: (sell * ~company_business) [Ok] [Right] [Correct] ["That's right"] [True], he could sell the company as a whole.
+	if(!$strat_1) {$strat_moves += 1}
+	$strat_1 = 1
+	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
+	
+	#! Shut it down
+	a: ([(shut * down) quit close leave [<< sell assets >>]] * {~company_business}>) [Ok] [Right] [Correct] ["That's right"] [True], he could close the company and sell the assets.
+	if(!$strat_2) {$strat_moves += 1}
+	$strat_2 = 1
+	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
+	
+	#! The owner put money into the new method
+	a: (!~no [invest "put money"]) ^reuse(STRAT_INVEST)
+	#! He should invest in the tech
+	a: STRAT_INVEST (!~no [technology tech process method machine]) [Ok] [Right] [Correct] ["That's right"] [True], he could invest in the new technology.
+	if(!$strat_3) {$strat_moves += 1}
+	$strat_3 = 1
+	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
+	
+	#! He could do nothing
+	a: (do nothing) ^reuse(STRAT_STILL)
+	#! He should stay where he is
+	a: STRAT_STILL ([stay keep still same]) [Ok] [Right] [Correct] ["That's right"] [True], he could keep the business as it is right now.
+	if(!$strat_4) {$strat_moves += 1}
+	$strat_4 = 1
+	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
+
+	#! I don't know
+	a: ([~no ~emoignorance not]) ^respond(~FIRST_RESPONSE)
+
+	a: () I didn't quite get it. ^reuse(FIRST_TEXT)
+
+topic: ~FIRST_RESPONSE  repeat ()
+u: ALL_STRAT_MOVES ($strat_moves>3) [Impressive] [Wow]  , you got them all.
+^respond(~SECOND_PROMPT)
+u: ($strat_moves>1) [Great] [good] [nice] job! We should then consider he could stay as he is, invest in the new technology, sell the company as a whole or close the company and sell the assets.
+^respond(~SECOND_PROMPT)
+u: () [Too bad.] [It's a shame.] For instance, you could consider he could stay as he is, invest in the new technology, sell the company as a whole or close the company and sell the assets.
+^respond(~SECOND_PROMPT)
+
+##################################   SECOND PROMPT   ###########################################
+
+concept: ~company_product [~body_container product item unit]
+topic: ~SECOND_PROMPT  repeat ()
+
+u: SECOND_INTRO () Now that we know what steps he could take, ^reuse(SECOND_QUESTION)
+t: SECOND_QUESTION () what [] do you need to figure out the size of the business?
+^keep()
+	#! What is the price of the coffins?
+	#! How is the product priced?
+	a: SECOND_PRICE (<< price ~company_product >>) The price of the hand-made coffin is $5000.
+	$size_price=1
+	a: (price) Price of what?
+		b: ([~company_product]) ^reuse(SECOND_PRICE)
+		b: () Could you please ask again? ^reuse(SECOND_QUESTION)
+
+	a: (cost) ^reuse(SECOND_COST)
+	#! What's the unit cost?
+	a: SECOND_COST (<< cost [~company_product ~company_business] >>) The cost per good sold is of $4800. Of that cost, 10% is from materials and the other 90% is labor. There is also a $700,000/year fixed cost.
+	$size_cost=1
+
+	#! Is there competition?
+	a: SECOND_COMPETITION ([competition competitor]) His company has about 10% market share, and is aproximatedly the same size as the nearest competitor.
+	$size_competition=1
+	
+	#! Are there any exogenous factors?
+	#! What are the trends in the market?
+	#! Should we worry about regulation?
+	a: SECOND_COMPETITION ([exogenous outside trend regulation]) His company has about 10% market share, and is aproximatedly the same size as the nearest competitor.
+	$size_competition=1
+
+	#! I need to know the size of the market
+
+	a: () What do you mean, exactly? ^reuse(SECOND_QUESTION)
