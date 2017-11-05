@@ -1,25 +1,25 @@
 # this function is executed once for every new user chatting with harry
-outputmacro: test()  # you get harry by default
+outputmacro: harry()  # you get harry by default
 $cs_token = #DO_INTERJECTION_SPLITTING  | #DO_SUBSTITUTE_SYSTEM   | #DO_NUMBER_MERGE | #DO_DATE_MERGE  | #DO_PROPERNAME_MERGE  | #DO_SPELLCHECK  | #DO_PARSE 
 
-^addtopic(~introductions)
+^addtopic(~CASE_TOPIC)
 $cs_control_main = ~control
 # $cs_control_post = ~XPOSTPROCESS  # uncomment to enable talk
 $userprompt = ^"%user: >"
-$botprompt = ^"TESTBOT: "
+$botprompt = ^"HARRY: "
 $singleResponse = 1 # issue only 1 output message
 
 
 table: defaultbot (^name)
 ^createfact(^name defaultbot defaultbot)
 DATA:
-test
+harry
 
 topic: ~control system ()
 
 # on startup, do introduction
 u: ( %input<%userfirstline) 
-	gambit(~introductions)
+	gambit(~CASE_TOPIC)
 
 u: (< shut up >) $shutup = 1
 u: (< talk  >) $shutup = null
@@ -61,10 +61,10 @@ u: () # main per-sentence processing
 	}	
 
 	# if no topic reacts, go to the last ditch keywordless topic
-	# if (%response == $_responseCount) 
-	# {
-	#	nofail(TOPIC ^respond(~keywordless))
-	# }
+	if (%response == $_responseCount) 
+	{
+		nofail(TOPIC ^respond(~keywordless))
+	}
 
 	# having no good response we know, now generate quibbles
 
