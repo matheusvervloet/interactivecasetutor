@@ -4,20 +4,21 @@
 topic: ~CASE_TOPIC  repeat ()
 
 #!x matches every time on startup of a new conversation
-t: BEGIN_CASE () Welcome to your case interview practice. I'm TEST and I'll be your guide. ^reuse(ASK_NAME)
+t: BEGIN_CASE () Welcome to your case interview practice. I'm %bot and I'll be your guide. ^reuse(ASK_NAME)
 
 t: ASK_NAME () What's your name [$repeat , once again] ?
 ^keep()
 	#! Brianne
-	a: (_~propername !$repeat ) ^reuse(CHECK_NAME)
-	#! My name is Earl
-	a: CHECK_NAME (my name be _*~4) So your name is ^original('_0) , is that right?
+	a: (_~propername !$repeat )
+	^reuse(CHECK_NAME)
+	#! My name is vinitius
+	a: CHECK_NAME (I name be _*~4) So your name is ^original('_0) , is that right?
 		$name = ^original('_0)
 		b: (~yes) ^respond(~CASE_INTRO) 
 		b: (~no) Could you repeat it for me, please? $repeat = 1 ^reuse(ASK_NAME)
 		b: () ^reuse(ASK_NAME)
-	#! My name's dog
-	a: ($repeat {my} {it} {name} {be} _*) ^reuse(CHECK_NAME)
+	#! It's dog $repeat = 1
+	a: ($repeat {I} {it} {name} {be} _*) ^reuse(CHECK_NAME)
 	a: () I didn't quite get it. $repeat = 1 ^reuse(ASK_NAME)
 
 ##################################    CASE INTRO       ###########################################
@@ -26,7 +27,7 @@ topic: ~CASE_INTRO  repeat ()
 
 u: () All right, $name, let's start our case. ^reuse(CASE_INTRO)
 
-t: CASE_INTRO () Our client is a coffin maker in Paraguay, which is located in South America. His company produces high-quality hand-made wooden coffins with skilled employees. However, the trend in the business is changing and new technology would allow him to build coffins using machines, which would require much less labour. The client wants to know if it makes sense to invest in this coffin-making technology or if he should leave the business completely. ^respond(~FIRST_PROMPT)
+t: CASE_INTRO () Our client is a coffin maker in Moldova, which is located in South America. His company produces high-quality hand-made wooden coffins with skilled employees. However, the trend in the business is changing and new technology would allow him to build coffins using machines, which would require much less labour. The client wants to know if it makes sense to invest in this coffin-making technology or if he should leave the business completely. ^respond(~FIRST_PROMPT)
 
 ##################################    FIRST PROMPT     ###########################################
 
@@ -49,7 +50,7 @@ u: FIRST_TEXT () [!$strat_moves Can you list a strategic move that our client sh
 	
 	#! The owner put money into the new method
 	a: (!~no [invest "put money"]) ^reuse(STRAT_INVEST)
-	#! He should invest in the tech
+	#! He should try in the tech
 	a: STRAT_INVEST (!~no [technology tech process method machine]) [Ok] [Right] [Correct] ["That's right"] [True], he could invest in the new technology.
 	if(!$strat_3) {$strat_moves += 1}
 	$strat_3 = 1
@@ -66,7 +67,9 @@ u: FIRST_TEXT () [!$strat_moves Can you list a strategic move that our client sh
 	#! I don't know
 	a: ([~no ~emoignorance not]) ^respond(~FIRST_RESPONSE)
 
-	a: () I didn't quite get it. ^reuse(FIRST_TEXT)
+	a: (<<[he client] can>>) That's a possibility. ^reuse(FIRST_TEXT)
+
+	a: () ^reuse(FIRST_TEXT)
 
 topic: ~FIRST_RESPONSE  repeat ()
 u: ALL_STRAT_MOVES ($strat_moves>3) [Impressive] [Wow]  , you got them all.
@@ -82,31 +85,149 @@ concept: ~company_product [~body_container product item unit]
 topic: ~SECOND_PROMPT  repeat ()
 
 u: SECOND_INTRO () Now that we know what steps he could take, ^reuse(SECOND_QUESTION)
-t: SECOND_QUESTION () what [] do you need to figure out the size of the business?
+
+t: SECOND_QUESTION ([!$size_price !$size_cost !$size_competition !$size_market])
+if (!$size_price AND !$size_cost AND !$size_competition AND !$size_factors AND !$size_market) {What do you need to figure out the yearly profit of our client?}
+else {What other information do you need?}
 ^keep()
 	#! What is the price of the coffins?
 	#! How is the product priced?
 	a: SECOND_PRICE (<< price ~company_product >>) The price of the hand-made coffin is $5000.
 	$size_price=1
+	^retry(TOPIC)
+	#! What's the price
 	a: (price) Price of what?
 		b: ([~company_product]) ^reuse(SECOND_PRICE)
 		b: () Could you please ask again? ^reuse(SECOND_QUESTION)
 
-	a: (cost) ^reuse(SECOND_COST)
 	#! What's the unit cost?
-	a: SECOND_COST (<< cost [~company_product ~company_business] >>) The cost per good sold is of $4800. Of that cost, 10% is from materials and the other 90% is labor. There is also a $700,000/year fixed cost.
+	a: (<< cost [~company_product ~company_business] >>)  ^reuse(SECOND_COST)
+	#! What's the cost?
+	a: SECOND_COST (cost) The cost per good sold is of $4800. Of that cost, 10% is from materials and the other 90% is labor. There is also a $700,000/year fixed cost.
 	$size_cost=1
+	^retry(TOPIC)
 
 	#! Is there competition?
-	a: SECOND_COMPETITION ([competition competitor]) His company has about 10% market share, and is aproximatedly the same size as the nearest competitor.
+	a: SECOND_COMPETITION ([competition competitor share]) His company has about 10% market share, and is aproximatedly the same size as the nearest competitor.
 	$size_competition=1
+	^retry(TOPIC)
 	
 	#! Are there any exogenous factors?
 	#! What are the trends in the market?
 	#! Should we worry about regulation?
-	a: SECOND_COMPETITION ([exogenous outside trend regulation]) His company has about 10% market share, and is aproximatedly the same size as the nearest competitor.
-	$size_competition=1
+	a: SECOND_COMPETITION ([exogenous outside trend regulation other "something else" "anything else"]) You don't need to worry about any other external factor.
+	$size_factors=1
+	^retry(TOPIC)
 
+	#! How many coffins are sold per month?
+	a: (<<[sell buy trade produce made] ~company_product>>) ^reuse(SECOND_MARKET)
 	#! I need to know the size of the market
+	a: SECOND_MARKET (<<market size>>) Can you calculate that for me? Moldova has a population of 4 million people, with a population growth of 0% and a life expectancy of 75 years. You can assume a flat age distribution (same number of people at every age), and that about 75% of people are buried in coffins. How many coffins are purchased per year in Moldova, then?
+	$size_market=1
+		b: (_~number _0=40000) ^reuse(EXACT_SIZE)
+		b: EXACT_SIZE (_~number _0<40100 _0>39900) Perfect! About 40,000 coffins are purchased every year.
+		^retry(TOPIC)
+		b: (_~number _0<50001 _0>29999) Pretty close, about 40,000 coffins are purchased every year.
+		^retry(TOPIC)
+		b: (_~number ) That's not quite right, about 40,000 coffins are purchased every year.
+		^retry(TOPIC)
+		b: ([~no ~emoignorance not]) Too bad. With this information, you should conclude that about 40,000 coffins are purchased every year.
+		^retry(TOPIC)
 
+	#! No
+	a: (_~no ^original(_0)=no) ^reuse(PROFIT_DONTKNOW)
+	#! Nothing
+	a: ([~no not]) ^reuse(ASK_PROFIT)
+
+	#! I don't know
+	a: PROFIT_DONTKNOW(~emoignorance) Don't you want to try some more?
+		b: (~yes) ^reuse(SECOND_QUESTION)
+		b: (~no) ^reuse(ANSWER_PROFIT)
+		b: () ^reuse(SECOND_QUESTION)
+
+	#! What is going on?
 	a: () What do you mean, exactly? ^reuse(SECOND_QUESTION)
+
+t: () We should have enough information to arrive at the profit now. ^reuse(ASK_PROFIT)
+t: ASK_PROFIT () What is his yearly profit, then?
+	a: (_~number _0=100000) ^reuse(EXACT_PROFIT)
+	a: EXACT_PROFIT (_~number _0<101000 _0>99000) Great! His profit is of $100,000.
+	^retry(TOPIC)
+	a: (_~number _0<80001 _0>129999) You were close, his profit is of $100,000.
+	^retry(TOPIC)
+	a: (_~number ) Not exactly, his profit is of $100,000.
+	^retry(TOPIC)
+	a: ANSWER_PROFIT ([~no ~emoignorance not]) Too bad. We should arrive at a profit of $100,000.
+	^reuse(FINISH_SECOND)
+
+t: FINISH_SECOND () Given a profit of $100,000/year and assuming a discount rate of 10%, we can say the business is worth about $1M, whether he sold it or kept it. ^respond(~THIRD_PROMPT)
+
+
+##################################   THIRD PROMPT   ###########################################
+
+topic: ~THIRD_PROMPT  repeat ()
+
+u: THIRD_INTRO () Let's now try to figure out how much he would make by shutting down and selling the assets. ^reuse(THIRD_QUESTION)
+
+t: THIRD_QUESTION () What kind of asset is most valuable in the case of his company?
+	#! Land in the most valuable asset
+	a: ([land estate terrain plot]) That's right, the assets are essentialy land and any improvements on it, since the firm builds coffins by hand.
+	^retry(TOPIC)
+	#! His equipment
+	a: ([equipment machinery machine apparatus appliance instrument tool gear]) The value of any equipment can be disconsidered, since the firm builds coffins mainly by hand. The assets are mainly land and any improvements.
+	^retry(TOPIC)
+	a: () The assets are mainly land and any improvements on it, since the firm builds coffins by hand.
+	^retry(TOPIC)
+
+t: () Given that the land and improvements were bought 48 years ago by $100,000, with an average appreciation of 6%/year, what is the current value of the assets?
+	a: (_~number _0=1600000) ^reuse(EXACT_ASSET)
+	a: EXACT_ASSET (_~number _0<1700000 _0>1500000) Exactly, the assets are worth $1,6M.
+	^retry(TOPIC)
+	a: (_~number _0<1200001 _0>1999999) Almost there, the assets are worth $1,6M.
+	^retry(TOPIC)
+	a: (_~number ) Sorry, but the assets are worth $1,6M.
+	^retry(TOPIC)
+	a: ANSWER_ASSET ([~no ~emoignorance not]) We should arrive at a value of $1,6M for the assets.
+	^retry(TOPIC)
+
+t: () We have already evaluated three possibilities, staying in the business, selling the company and selling the assets. ^respond(~FOURTH_PROMPT)
+
+##################################   FOURTH PROMPT   ###########################################
+
+topic: ~FOURTH_PROMPT repeat ()
+
+u: () Finally, let's find out what would the company value be if the owner decided to invest in the new technology.
+^reuse(FOURTH_QUESTION)
+
+t: FOURTH_QUESTION ([!$tech_investment !$tech_savings])
+if (!$tech_investment AND !$tech_savings AND !$tech_other) {What information do you think we need to figure this out?}
+else {Anything else?}
+	#! How much will he have to invest?
+	a: (!~no [invest spend money]) It will cost $1M to invest in the new technology.
+	
+	#! Will there be any cost savings?
+	a: ([cost save reduce]) While the cost with materials does not change, labor costs are reduced by 50%.
+
+	#! Is the tech patented
+	a: ([patent proprietary exclusive legal copyright trademark]) ^reuse(FOURTH_COMPETITION)
+	#! What will the competitors do?
+	a: FOURTH_COMPETITION ([rival competition competitor "other companies"]) The patent for the new technology is owned by a private company, who is not offering exclusivity to anyone, which means competitors can also adopt the new tech.
+
+	#! Is there any impact on the brand
+	a: ([brand image customer preference perception]) You can assume the consumer will be indifferent to the change in the process and that there will be no impact in the brand.
+
+	a: ([~no ~emoignorance not]) *** ^reuse(~FIRST_RESPONSE)
+
+	a: () [You can ingnore that.] [You can assume that won't have an impact.] [That won't be necessary.]
+
+t: () We should have enough information right now. ^reuse(ASK_PROFIT)
+t: ASK_PROFIT () The cost to invest in the new tech is $1M and using it reduces labor costs by 50%, with no change in customer perception of the product. Since our competitors can also adopt the new technology, prices in the market will drop, following the reduction of costs. Let's assume the gross margin stays the same as before the investment. Can you calculate the new yearly profit?
+	a: (_~number _0=-260000) ^reuse(EXACT_PROFIT)
+	a: EXACT_PROFIT (_~number _0>-270001 _0<-249999) Correct, he will have a loss of $260,000 per year.
+	^retry(TOPIC)
+	a: (_~number _0>-300001 _0<-21999) You were close, he will have a loss of $260,000 per year.
+	^retry(TOPIC)
+	a: (_~number ) Not exactly, he will actually have a loss of $260,000 per year.
+	^retry(TOPIC)
+	a: ANSWER_PROFIT ([~no ~emoignorance not]) Too bad. There will be a loss of $260,000 per year.
+	^reuse(FINISH_SECOND)
