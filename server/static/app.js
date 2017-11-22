@@ -50,10 +50,10 @@
                     contentType:"application/json; charset=utf-8",
                     dataType:"json",
                     success: function(data){
-                                timer = data.split('\\n')[0].split(' ').length * 100;
+                                timer = data.split('\\n')[0].split(' ').length * 250;
                                 data.split('\\n').forEach(function (item, index) {
                                     setTimeout(function (){return printMessage(item, 'left')}, timer);
-                                    timer += (item.split(' ').length)*100;
+                                    timer += (item.split(' ').length)*250;
                                 });
                             }
             });

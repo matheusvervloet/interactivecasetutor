@@ -19,6 +19,7 @@ def response():
 		result = request.get_json()
 		username = request.remote_addr + request.headers.get('User-Agent')
 		message = username+chr(0)+cs_bot+chr(0)+result+chr(0)
+		print(result)
 		if len(result):
 			split_result = result.split(' ')[0]
 			if split_result==":reset" or split_result==":pos" or split_result==":why" or split_result==":build":
@@ -36,6 +37,7 @@ def response():
 			else:
 				break
 		client_socket.close()
+		print(data_out)
 		return jsonify(data_out)
 
 
