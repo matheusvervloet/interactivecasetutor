@@ -5,7 +5,7 @@ topic: ~CASE_TOPIC repeat ()
 
 t: RESET () ^keep() ^eval(:reset)
 
-#!x matches every time on startup of a new conversation
+# t: BEGIN_CASE () ^respond(~FIFTH_PROMPT)
 t: BEGIN_CASE () Welcome to your case interview practice, and thank you for being here! I'm $botname and I'll be your guide. \n ^reuse(ASK_NAME)
 
 t: ASK_NAME () What's your name [$repeat , once again] ?
@@ -27,20 +27,20 @@ t: ASK_NAME () What's your name [$repeat , once again] ?
 
 topic: ~CASE_INTRO  repeat ()
 
-u: () Very nice to meet you, $name! To insure a pleasant experience in this case interview, there are some basic orientations we should follow. They are: \n ^respond(~CASE_INTRO)
+u: () Very nice to meet you, $name! To ensure a pleasant experience in this case interview, there are some basic orientations we should follow. They are: \n ^retry(TOPIC)
 
-u: () 1. Always answer in english. \n 2. Try to respond directly to what was asked. \n 3. Always use single sentence for your answer (avoid dividing it with commas or "and"). \n 4. Try acting like you would in a real case interview. \n 5. You can always answer "I don't know" if you can't answer a question. \n 6. There is not time limit for this case. \n ^respond(~CASE_INTRO)
+u: () 1. Always answer in English. \n 2. Try to respond directly to what was asked. \n 3. Always use a single sentence for your answer (avoid dividing it with commas or "and"). \n 4. Try acting like you would in a real case interview. \n 5. You can always answer "I don't know" if you can't answer a question. \n 6. There is no time limit for this case. \n ^retry(TOPIC)
 
 u: () Also, you can always refresh/reload this webpage if you wish to restart. Are you ready to begin our interview?
-	a: (~yes) ^respond(~CASE_INTRO)
+	a: (~yes) ^retry(TOPIC)
 	a: WAIT_READY (~no) Okay, I can wait! Please say "I'm ready" when you're ready.
-		b: (I be ready) ^respond(~CASE_INTRO)
+		b: (![ no not aint ] ready) ^retry(TOPIC)
 		b: () ^reuse(WAIT_READY)
 	a: () ^reuse(WAIT_READY)
 
 u: () All right, $name, let's start our case. I'll begin with the introduction. \n ^reuse(CASE_INTRO)
 
-t: CASE_INTRO () Our client is a coffin maker in Moldova, which is located in Eastern Europe. His company produces high-quality hand-made wooden coffins with skilled employees. \n However, the trend in the business is changing and new technology would allow him to build coffins using machines, which would require much less labour. \n The client wants to know if he should invest in this coffin-making technology or if he should leave the business completely. \n First, let's try to list what our client could do with his company. \n ^respond(~FIRST_PROMPT)
+u: CASE_INTRO () Our client is a coffin maker in Moldova, Eastern Europe. His company produces high-quality handmade wooden coffins with skilled employees. \n However, the trend in the business is changing and new technology would allow him to build coffins using machines, which would require much less labor. \n The client wants to know if he should invest in this coffin-making technology or if he should leave the business completely. \n First, let's try to list what our client could do with his company. \n ^respond(~FIRST_PROMPT)
 
 ##################################    FIRST PROMPT     ###########################################
 
@@ -50,29 +50,29 @@ topic: ~FIRST_PROMPT repeat ()
 u: FIRST_TEXT () [!$strat_moves Please name a strategic move that our client should consider.] [$strat_moves What else?] [$strat_moves Can you think of something else?] [$strat_moves Any other ideas?] [$strat_moves Could you try something else?]
 ^keep()
 	#! Sell the whole business
-	a: (<< sell [~company_business it] >>) [Ok] [Right] [Correct] ["That's right"] [True]! He could sell the company as a whole. \n
+	a: (!$strat_1 << sell [~company_business it] >>) [Ok] [Right] [Correct] [That's right] [True]! He could sell the company as a whole. \n
 	if(!$strat_1) {$strat_moves += 1}
 	$strat_1 = 1
 	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
 	
 	#! Shut it down
-	a: ([(shut * down) quit close leave liquidate [<< sell assets >>]]) [Ok] [Right] [Correct] ["That's right"] [True]! He could close the company and sell the assets. \n
+	a: (!$strat_2 [(shut * down) quit close leave liquidate [<< sell assets >>]]) [Ok] [Right] [Correct] [That's right] [True]! He could close the company and sell the assets. \n
 	if(!$strat_2) {$strat_moves += 1}
 	$strat_2 = 1
 	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
 	
 	#! The owner put money into the new method
-	a: (!~no [invest "put money"]) ^reuse(STRAT_INVEST)
+	a: (!$strat_3 [invest "put money"]) ^reuse(STRAT_INVEST)
 	#! He should try in the tech
-	a: STRAT_INVEST (!~no [technology tech process method machine]) [Ok] [Right] [Correct] ["That's right"] [True]! He could invest in the new technology. \n
+	a: STRAT_INVEST (!$strat_3 ![ no not] [technology tech process method machine investment]) [Ok] [Right] [Correct] [That's right] [True]! He could invest in the new technology. \n
 	if(!$strat_3) {$strat_moves += 1}
 	$strat_3 = 1
 	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
 	
 	#! He could do nothing
-	a: (do nothing) ^reuse(STRAT_STILL)
+	a: (!$strat_4 do nothing) ^reuse(STRAT_STILL)
 	#! He should stay where he is
-	a: STRAT_STILL ([stay keep still same]) [Ok] [Right] [Correct] ["That's right"] [True]! He could keep the business as it is right now. \n
+	a: STRAT_STILL ([stay keep still same]) [Ok] [Right] [Correct] [That's right] [True]! He could keep the business as it is right now. \n
 	if(!$strat_4) {$strat_moves += 1}
 	$strat_4 = 1
 	if($strat_moves<4) {^reuse(FIRST_TEXT)} else {^respond(~FIRST_RESPONSE)}
@@ -94,18 +94,18 @@ u: () That's ok! \n For instance, we can consider he could stay as he is, invest
 
 ##################################   SECOND PROMPT   ###########################################
 
-concept: ~company_product [~body_container product item unit]
+concept: ~company_product [~body_container product item unit good]
 topic: ~SECOND_PROMPT  repeat ()
 
-u: SECOND_INTRO () Now that we know what steps he could take, let's try to figure figure out the yearly profit of our client. ^reuse(SECOND_QUESTION)
+u: SECOND_INTRO () Now that we know what steps he could take, let's try to figure out the yearly profit of our client. ^reuse(SECOND_QUESTION)
 
-t: SECOND_QUESTION ([!$size_price !$size_cost !$size_competition !$size_market] !$size_nothing)
-if (!$size_price AND !$size_cost AND !$size_competition AND !$size_factors AND !$size_market) {What information do you need to calculate his profit?}
-else {What other information do you need?}
+t: SECOND_QUESTION ([!$size_price !$size_cost !$size_market] !$size_nothing)
+if (!$size_price AND !$size_cost AND !$size_competition AND !$size_factors AND !$size_market) {What information do you need to calculate his profit? Please enter one at a time.}
+else {[What other information do you need?][What else do you need?]}
 ^keep()
 	#! What is the price of the coffins?
 	#! How is the product priced?
-	a: SECOND_PRICE (<< price ~company_product >>) The price of the hand-made coffin is $5000. \n
+	a: SECOND_PRICE (<< price ~company_product >>) The price of the handmade coffin is $5000. \n
 	$size_price=1
 	^retry(TOPIC)
 	#! What's the price
@@ -133,59 +133,60 @@ else {What other information do you need?}
 	^retry(TOPIC)
 
 	#! What is the volume of sales?
-	a: ([volume sale transaction]) ^reuse(SECOND_MARKET)
+	a: ([volume sale transaction revenue income]) ^reuse(SECOND_MARKET)
 	#! How many coffins are sold per month?
-	a: (<<[sell sale income buy trade produce made] ~company_product>>) ^reuse(SECOND_MARKET)
+	a: (<<[sell sale buy trade produce made] ~company_product>>) ^reuse(SECOND_MARKET)
 	#! I need to know the size of the market
 	a: SECOND_MARKET (<<market size>>) Let's try to estimate the market size. \n Moldova has a population of 4 million people, with a population growth of 0% and a life expectancy of 75 years. \n You can assume a flat age distribution (same number of people at every age), and that about 75% of people are buried in coffins. \n How many coffins are purchased per year in Moldova, then?
 	$size_market=1
 		b: (_~number _0=40) ^reuse(EXACT_SIZE)
 		b: EXACT_SIZE (_~number _0<40100 _0>39900) $exact_size = 1 Perfect! About 40,000 coffins are purchased every year in the whole country. Since he has a 10% market share, he sells about 4,000 coffins every year. \n 
-		^retry(TOPIC)
+		Now back to the profit. ^retry(TOPIC)
 		b: (_~number _0<51 _0>29) ^reuse(CLOSE_SIZE)
 		b: CLOSE_SIZE (_~number _0<50001 _0>29999) Pretty close, about 40,000 coffins are purchased every year in the whole country. Since he has a 10% market share, he sells about 4,000 coffins every year. \n 
-		^retry(TOPIC)
+		^reuse(EXPLAIN_MARKET)
 		b: (_~number ) Actually, about 40,000 coffins are purchased every year in the whole country. Since he has a 10% market share, he sells about 4,000 coffins every year. \n 
-		^retry(TOPIC)
+		^reuse(EXPLAIN_MARKET)
 		b: ANSWER_SIZE ([~no ~emoignorance not]) [!$SIZE_DONTKNOW That's ok.] \n With this information, we can estimate that about 40,000 coffins are purchased every year in the whole country. Since he has a 10% market share, he sells about 4,000 coffins every year. \n 
-		^retry(TOPIC)
+		^reuse(EXPLAIN_MARKET)
 		b: () $SIZE_DONTKNOW = 1 ^reuse(ANSWER_SIZE)
 
 	#! No
 	a: (_~no ^original(_0)=no) ^reuse(PROFIT_DONTKNOW)
-	#! Nothing
-	a: ([~no not nothing]) ^reuse(TELL_INFOS)
 
 	#! I don't know
-	a: PROFIT_DONTKNOW(~emoignorance) Don't you want to try some more?
+	a: PROFIT_DONTKNOW ([~emoignorance ([~no not nothing] know)]) Don't you want to try some more?
 		b: (~yes) ^reuse(SECOND_QUESTION)
-		b: (~no) ^reuse(TELL_INFOS) 
+		b: (~no) $VALUE_DONTKNOW = 1 ^reuse(TELL_INFOS) 
 		b: () ^reuse(SECOND_QUESTION)
+
+	#! Nothing
+	a: ([~no not nothing]) ^reuse(TELL_INFOS)
 
 	#! What is going on?
 	a: () What do you mean, exactly? \n ^reuse(SECOND_QUESTION)
 
-t: (!$exact_size) The number of coffins sold can be calculated by (4 million) x (1/75) * (75%) = 40,000. \n ^retry(TOPIC)
+t: EXPLAIN_MARKET (!$exact_size !$VALUE_DONTKNOW) The number of coffins sold can be calculated by (4 million) x (1/75) * (75%) = 40,000. \n Now back to the profit. ^retry(TOPIC)
 
 t: () We should have enough information to calculate the profit now! \n ^reuse(TELL_INFOS)
-t: TELL_INFOS () The cost per good sold is of $4800. Of that cost, 10% is from materials and the other 90% is labor. \n The price of the hand-made coffin is $5000. \n About 40,000 coffins are purchased every year in Moldova, and the client has 10% market share. \n
+t: TELL_INFOS () [!$VALUE_DONTKNOW Let's recap.] The cost per good sold is of $4800. Of that cost, 10% is from materials and the other 90% is labor. \n The price of the handmade coffin is $5000. \n About 40,000 coffins are purchased every year in Moldova, and the client has 10% market share. \n
 ^reuse(ASK_PROFIT)
 t: ASK_PROFIT () With that information, what should his yearly profit be?
 	a: (_~number _0=100) ^reuse(EXACT_PROFIT)
-	a: EXACT_PROFIT (_~number _0<101000 _0>99000) $exact_profit = 1 Great! His profit is of $100,000. \n
-	^retry(TOPIC)
-	a: (_~number _0<121 _0>79) ^reuse(CLOSE_PROFIT)
-	a: CLOSE_PROFIT (_~number _0<120001 _0>79999) You were close, his profit is of $100,000. \n
-	^retry(TOPIC)
-	a: (_~number ) Not exactly, his profit is of $100,000. \n
-	^retry(TOPIC)
-	a: ANSWER_PROFIT ([~no ~emoignorance not]) [!$PROFIT_DONTKNOW Thats ok.]  We should arrive at a profit of around $100,000. \n
+	a: EXACT_PROFIT (_~number _0<101000 _0>99000) $exact_profit = 1 Great! His profit is of around $100,000. \n
 	^reuse(FINISH_SECOND)
+	a: (_~number _0<121 _0>79) ^reuse(CLOSE_PROFIT)
+	a: CLOSE_PROFIT (_~number _0<120001 _0>79999) You were close, his profit is of around $100,000. \n
+	^reuse(EXPLAIN_PROFIT)
+	a: (_~number ) Not exactly, his profit is of around $100,000. \n
+	^reuse(EXPLAIN_PROFIT)
+	a: ANSWER_PROFIT ([~no ~emoignorance not]) [!$PROFIT_DONTKNOW Thats ok.]  We should arrive at a profit of around $100,000. \n
+	^reuse(EXPLAIN_PROFIT)
 	a: () $PROFIT_DONTKNOW = 1 ^reuse(ANSWER_PROFIT) 
 
-t: FINISH_SECOND (!$exact_profit) The profit can be calculated by (($5,000 – $4,800) x 40,000 coffins x 10% market share) - $700,000 = $100,000. \n ^retry(TOPIC)
+t: EXPLAIN_PROFIT (!$exact_profit) The profit can be calculated by ^"(($5,000 – $4,800) x 40,000 coffins x 10% market share) - $700,000 = $100,000." \n ^reuse(FINISH_SECOND)
 
-t: () Now that we know the profit, assuming a standard discount rate of 10%, we can say the business is worth about $1.0M (the present value given the perpetuity, $100,000 / 0.1), whether he sold it or kept it. \n ^respond(~THIRD_PROMPT)
+t: FINISH_SECOND() Now that we know the profit, assuming a standard discount rate of 10%, we can say the business is worth about $1.0M (the present value given the perpetuity, $100,000 / 0.1), whether he sold it or kept it. \n ^respond(~THIRD_PROMPT)
 
 
 ##################################   THIRD PROMPT   ###########################################
@@ -196,7 +197,7 @@ u: THIRD_INTRO () Let's now try to figure out how much he would make by shutting
 
 t: THIRD_QUESTION () What kind of asset you think is most valuable in the case of his company?
 	#! Land in the most valuable asset
-	a: ([land estate terrain plot]) That's right, the most important assets are essentialy land and any improvements on it, since the firm builds coffins by hand. \n
+	a: ([land estate terrain plot plant factory workshop]) That's right, the most important assets are essentialy land and any improvements on it, since the firm builds coffins by hand. \n
 	^retry(TOPIC)
 	#! The equipment
 	a: ([equipment machinery machine apparatus appliance instrument tool gear]) The value of any equipment can be disconsidered, since the firm builds coffins mainly by hand. \n The most important assets are mainly land and any improvements. \n
@@ -205,21 +206,21 @@ t: THIRD_QUESTION () What kind of asset you think is most valuable in the case o
 	^retry(TOPIC)
 
 t: () Let's try to calculate the value of the company's assets. Given that the land and improvements were bought 48 years ago by $100,000, with an average appreciation of 6%/year, what is the current value of the assets?
-	a: (_~number _0<1.7 _0>1.5) ^reuse(EXACT_ASSET)
-	a: (_~number _0<1700 _0>1500) ^reuse(EXACT_ASSET)
-	a: EXACT_ASSET (_~number _0<1700000 _0>1500000) $exact_asset = 1 Exactly, the assets are worth around $1,6M. \n
+	a: (_~number _0<1.71 _0>1.49) ^reuse(EXACT_ASSET)
+	a: (_~number _0<1710 _0>1499) ^reuse(EXACT_ASSET)
+	a: EXACT_ASSET (_~number _0<1700001 _0>1499999) $exact_asset = 1 Exactly, the assets are worth around $1.6M. \n
 	^retry(TOPIC)
-	a: (_~number _0<2.1 _0>1.19) ^reuse(CLOSE_ASSET)
+	a: (_~number _0<2.10 _0>1.19) ^reuse(CLOSE_ASSET)
 	a: (_~number _0<2100 _0>1190) ^reuse(CLOSE_ASSET)
-	a: CLOSE_ASSET (_~number _0<1200001 _0>1999999) Almost there, the assets are worth around $1,6M. \n
+	a: CLOSE_ASSET (_~number _0<2100001 _0>1199999) Almost there, the assets are worth around ^"$1.6M". \n
 	^retry(TOPIC)
-	a: (_~number ) Sorry, but the assets are worth around $1,6M. \n
+	a: (_~number ) Sorry, but the assets are worth around $1.6M. \n
 	^retry(TOPIC)
-	a: ANSWER_ASSET ([~no ~emoignorance not]) We should arrive at a value of around $1,6M for the assets. \n
+	a: ANSWER_ASSET ([~no ~emoignorance not]) We should arrive at a value of around $1.6M for the assets. \n
 	^retry(TOPIC)
 	a: () ^reuse(ANSWER_ASSET)
 
-t: () The value of the assets can be calculated by $100K * (1.06)^48, or $100K * (2 * 2 * 2 * 2) using the rule of 72 (6% growth doubles investment every 72/6=12 years). \n ^retry(TOPIC)
+t: (!$exact_asset) The value of the assets can be calculated by ^"$100K * (1.06)\^48 = ~$1.6M (this can be simplified using the rule of 72, 6% growth doubles investment every 72/6 = 12 years)". \n ^retry(TOPIC)
 
 t: ()  We have already evaluated three possibilities, staying in the business, selling the company and selling the assets. \n ^respond(~FOURTH_PROMPT)
 
@@ -235,10 +236,14 @@ if (!$tech_investment AND !$tech_savings AND !$tech_other) {What information do 
 else {Anything else?}
 ^keep()
 	#! How much will he have to invest?
-	a: (!~no [invest spend money]) $tech_investment = 1 It will cost $1M to invest in the new technology. \n ^retry(TOPIC)
+	a: (<<[cost price value] [technology tech process method machine investment]>>) ^reuse(COST_TECH)
+	a: COST_TECH ( [invest spend money]) $tech_investment = 1 It will cost $1.0M to invest in the new technology. \n ^retry(TOPIC)
 	
 	#! Will there be any cost savings?
-	a: ([cost save reduce]) $tech_savings = 1  While the cost with materials does not change, labor costs are reduced by 50%. \n There is no change in the fixed costs. \n ^retry(TOPIC)
+	a: ([cost save reduce saving save worker labor employee production]) $tech_savings = 1  While the cost with materials does not change, labor costs are reduced by 50%. \n There is no change in the fixed costs. \n ^retry(TOPIC)
+
+	#! What is the new price?
+	a: ([price profit return]) The new price will depend on the costs, and the gross margin will be kept the same for the sake of simplification. \n ^retry(TOPIC)
 
 	#! Is the tech patented
 	a: ([patent proprietary exclusive legal copyright trademark]) ^reuse(FOURTH_COMPETITION)
@@ -248,27 +253,33 @@ else {Anything else?}
 	#! Is there any impact on the brand
 	a: ([brand image customer preference perception]) You can assume the consumer will be indifferent to the change in the process and that there will be no impact in the brand. \n ^retry(TOPIC)
 
-	a: ([~no ~emoignorance not]) ^reuse(ASK_NEW_PROFIT)
+	a: ([~no not nothing]) $NEW_PROFIT_DONTKNOW = 1 ^reuse(ASK_NEW_PROFIT)
 
-	a: () [You can ingnore that.] [You can assume that won't have an impact.] [That won't be necessary.] \n ^retry(TOPIC)
+	a: (~emoignorance) ^reuse(ASK_NEW_PROFIT)
+
+	a: () [You can ingnore that at the moment.] [You can assume that won't have an impact.] [That won't be necessary right now.] \n ^retry(TOPIC)
 
 t: () I think we should have enough information to calculate the new profit! \n ^reuse(ASK_NEW_PROFIT)
-t: ASK_NEW_PROFIT () Using the new techonology reduces labor costs by 50%, with no change in customer perception of the product. \n Since our competitors can also adopt the new technology, prices in the market will drop, following the reduction of costs. \n Let's assume the *gross margin stays the same* as before the investment. If we find out the new yearly profit, we can discover how long it will take to pay the $1.0M initial investment. \n Can you calculate the new yearly profit? \n
-	a: (_~number _0<270 _0>249) ^reuse(EXACT_NEW_PROFIT)
-	a: EXACT_NEW_PROFIT (_~number _0<270001 _0>249999) $exact_new_profit = 1 Exactly! He will have a loss of $260,000 per year. \n
-	^retry(TOPIC)
-	a: (_~number _0<300 _0>219) ^reuse(CLOSE_NEW_PROFIT)
-	a: CLOSE_NEW_PROFIT (_~number _0<300001 _0>21999) You were close, he will have a loss of $260,000 per year. \n
-	^retry(TOPIC)
-	a: (_~number ) Not exactly, he will actually have a loss of $260,000 per year. \n
-	^retry(TOPIC)
-	a: ANSWER_NEW_PROFIT ([~no ~emoignorance not]) That's ok. There will actually be a loss of $260,000 per year. \n
+t: ASK_NEW_PROFIT () [!$NEW_PROFIT_DONTKNOW Let's recap.] Using the new techonology reduces labor costs by 50%, with no change in customer perception of the product. \n Since our competitors can also adopt the new technology, prices in the market will drop, following the reduction of costs. \n Let's assume the *gross margin stays the same* as before the investment. If we find out the new yearly profit, we can discover how long it will take to pay the $1.0M initial investment. \n What is the new yearly profit, given the data provided? \n
+	a: (_~number _0<271 _0>249) ^reuse(EXACT_NEW_PROFIT)
+	a: (_~number _0>-269 _0<-251) ^reuse(EXACT_NEW_PROFIT)
+	a: (_~number _0>-269999 _0<-250001) ^reuse(EXACT_NEW_PROFIT)
+	a: EXACT_NEW_PROFIT (_~number _0<270001 _0>249999) $exact_new_profit = 1 Exactly! He will have a loss of around $260,000 per year. \n
+	^reuse(END_FOURTH)
+	a: (_~number _0<301 _0>219) ^reuse(CLOSE_NEW_PROFIT)
+	a: (_~number _0>-299 _0<-221) ^reuse(CLOSE_NEW_PROFIT)
+	a: (_~number _0>-299999 _0<-220001) ^reuse(CLOSE_NEW_PROFIT)
+	a: CLOSE_NEW_PROFIT (_~number _0<300001 _0>21999) You were close, he will have a loss of around $260,000 per year. \n
 	^reuse(FINISH_FOURTH)
-	a: () ^reuse(ANSWER_NEW_PROFIT)
+	a: (_~number ) Not exactly, he will actually have a loss of around $260,000 per year. \n
+	^reuse(FINISH_FOURTH)
+	a: ANSWER_NEW_PROFIT ([~no ~emoignorance not]) [!$NEW_PROFIT_SOMETHING_ELSE That's ok.] Actually, there will actually be a loss of around $260,000 per year. \n
+	^reuse(FINISH_FOURTH)
+	a: () $NEW_PROFIT_SOMETHING_ELSE = 1 ^reuse(ANSWER_NEW_PROFIT)
 
-t: FINISH_FOURTH (!exact_new_profit) The new profit can be calculated by getting to the new price of: (($4,800 * 0.9 * 0.5 labor cost) + ($4,800 * 0.1 material cost)) / (1 - 0.04 profit margin) = $2750. Then the profit will be: ($2750 profit - $2640 costs) * 4,000 units sold - $700,000 = -$260,000 \n ^retry(TOPIC)
+t: FINISH_FOURTH (!$exact_new_profit) The new profit can be calculated by getting to the new price of: ^"(($4,800 * 0.9 * 0.5) labor cost + ($4,800 * 0.1) material cost) / (1 - 0.04) profit margin = $2750." \n ^"Then the profit will be: ($2750 price - $2640 costs) * 4,000 units sold - $700,000 fixed cost = -$260,000" \n ^reuse(END_FOURTH)
 
-t: () With the reduction in profits, actually a loss, the company will definetly be worth less than it was before investing in the technology, and the investment will never be paid. \n
+t: END_FOURTH () With the reduction in profits, actually a loss, the company will definetly be worth less than it was before investing in the technology, and the investment will never be paid. \n
 ^respond(~FIFTH_PROMPT)
 
 ##################################   FIFTH PROMPT   ###########################################
@@ -296,7 +307,7 @@ t: FINAL_OFFER () Now, given that our won't invest in the technology, let's say 
 		b: () $FIFTH_DONTKNOW = 1 ^reuse(REFUSE_DEAL)
 
 	a: (~emoignorance) $FIFTH_DONTKNOW = 1 ^reuse(REFUSE_DEAL) 
-	a: () ^reuse(REFUSE_DEAL)
+	a: () $FIFTH_DONTKNOW = 1 ^reuse(REFUSE_DEAL)
 
 t: () ^respond(~END_CASE)
 
@@ -307,7 +318,7 @@ topic: ~END_CASE repeat ()
 u: () All right! We have analysed the outcomes of all possible strategies and determined the best one to follow, great job! \n Thank you for your dedication and patience, I hope you were able to improve your case-solving skills with this experience. \n
 ^reuse(FEEDBACK)
 
-t: FEEDBACK ()  My script is still under development, so I'm sorry for any unexpected response. Feedback is greatly apreciated! \n Please comment on your experience on the following link: \n ^"https://goo.gl/forms/OP5Q2sroI4W00zWe2" \n
+t: FEEDBACK ()  My script is still under development, so I'm sorry for any unexpected response. Feedback is greatly apreciated! \n Please comment on your experience on the following link: ^"<a href=https://goo.gl/forms/OP5Q2sroI4W00zWe2>https://goo.gl/forms/OP5Q2sroI4W00zWe2</a>" \n
 ^respond(~END_LOOP)
 
 
@@ -315,7 +326,7 @@ t: FEEDBACK ()  My script is still under development, so I'm sorry for any unexp
 
 topic: ~END_LOOP repeat keep ()
 
-u: () We have finished the case. 
+t: () We have finished the case. 
 
 
 # b: (<<[technology tech process method machine] ~company_business [unprofitable loss]>>)
