@@ -1,5 +1,5 @@
 # Interactive Case Tutor
-Interactive case tutoring chatbot submitted as the final project for obtaining the degree of Bachelor of Computer Engineering at UFSCar.
+Interactive case tutoring chatbot.
 
 Contents:  
 *case.top* - ChatScript (https://github.com/bwilcox-1234/ChatScript) topic file. Provides main logic for the case/conversation.  
